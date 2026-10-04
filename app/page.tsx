@@ -1,0 +1,91 @@
+'use client'
+
+import { useMemo, useState } from 'react'
+import {
+  Activity,
+  Bell,
+  CheckCircle2,
+  ChevronDown,
+  Clock3,
+  Cpu,
+  Download,
+  Gauge,
+  History,
+  Lightbulb,
+  Moon,
+  MoreHorizontal,
+  PlugZap,
+  Radio,
+  Settings2,
+  ShieldCheck,
+  Sun,
+  TriangleAlert,
+  UserRound,
+  Zap,
+  CircleDollarSign,
+} from 'lucide-react'
+import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+
+const machines = [
+  { id: 'CNC-01', name: 'CNC Phay 01', model: 'Mazak VCN-530C', status: 'ĐANG CẮT GỌT', type: 'cutting', power: '4.80', detail: 'Tải 43%', oee: '74%', parts: '38', accent: 'emerald' },
+  { id: 'CNC-02', name: 'CNC Phay 02', model: 'Doosan DNM 5700', status: 'BÁO ĐỘNG KẸT DAO', type: 'alarm', power: '14.20', detail: 'Quá tải dòng Pha A', oee: '42%', parts: '29', accent: 'red' },
+  { id: 'CNC-03', name: 'CNC Tiện 03', model: 'Fanuc Robodrill a-D21', status: 'BẬT CHỜ LÃNG PHÍ', type: 'idle', power: '0.42', detail: 'Chờ không tải: 18 phút', oee: '51%', parts: '26', accent: 'amber' },
+  { id: 'CNC-04', name: 'Máy Mài 04', model: 'Makino F5', status: 'ĐÃ TẮT CB', type: 'off', power: '0.00', detail: 'Tắt máy từ 11:30', oee: '—', parts: '0', accent: 'slate' },
+]
+
+const wave = Array.from({ length: 75 }, (_, i) => ({
+  t: `${String(8 + Math.floor(i / 5)).padStart(2, '0')}:${String((i * 12) % 60).padStart(2, '0')}`,
+  power: Number((3.45 + Math.sin(i / 2.2) * 0.8 + Math.sin(i / 6) * 0.45 + (i % 9 === 0 ? 0.7 : 0)).toFixed(2)),
+}))
+
+function GlassCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return <section className={`rounded-xl border border-white/10 bg-slate-900/70 shadow-[0_12px_40px_rgba(0,0,0,.22)] backdrop-blur-md ${className}`}>{children}</section>
+}
+
+function StatusBadge({ type, children }: { type: string; children: React.ReactNode }) {
+  const styles: Record<string, string> = { cutting: 'bg-emerald-500/10 text-emerald-400 border-emerald-400/20', alarm: 'bg-red-500/10 text-red-400 border-red-400/30', idle: 'bg-amber-500/10 text-amber-400 border-amber-400/20', off: 'bg-slate-500/10 text-slate-400 border-slate-400/20' }
+  return <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] font-bold tracking-wide ${styles[type]}`}><span className={`size-1.5 rounded-full ${type === 'cutting' ? 'bg-emerald-400' : type === 'alarm' ? 'animate-pulse bg-red-400' : type === 'idle' ? 'bg-amber-400' : 'bg-slate-400'}`} />{children}</span>
+}
+
+function Metric({ label, value, unit, color = 'cyan' }: { label: string; value: string; unit?: string; color?: string }) {
+  return <div><p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p><p className={`mt-1 font-mono text-sm font-semibold text-${color}-400`}>{value}<span className="ml-1 text-[10px] text-slate-500">{unit}</span></p></div>
+}
+
+export default function Page() {
+  const [selected, setSelected] = useState(0)
+  const [tab, setTab] = useState('Tất Cả')
+  const [light, setLight] = useState(false)
+  const machine = machines[selected]
+  const filtered = useMemo(() => machines.filter((m) => tab === 'Tất Cả' || (tab === 'Đang Cắt' && m.type === 'cutting') || (tab === 'Đang Chờ' && m.type === 'idle') || (tab === 'Cảnh Báo' && m.type === 'alarm')), [tab])
+
+  return (
+    <main className={light ? 'light min-h-screen bg-slate-100 text-slate-900' : 'min-h-screen bg-[#06080f] text-slate-100'}>
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-[#080c15]/90 px-4 py-3 backdrop-blur-xl lg:px-8">
+        <div className="mx-auto flex max-w-[1700px] flex-wrap items-center gap-4">
+          <div className="flex min-w-[250px] items-center gap-3"><div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/10">W</div><div><div className="text-sm font-bold tracking-tight">WATTORA <span className="text-cyan-400">3P</span></div><div className="text-[10px] text-slate-500">Giám Sát Năng Suất Máy CNC Thời Gian Thực</div></div></div>
+          <div className="flex flex-1 flex-wrap items-center justify-center gap-2"><button className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-slate-300">Xưởng Cơ Khí Chính Xác Hưng Phát - Bình Dương <ChevronDown className="size-3 text-slate-500" /></button><button className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-slate-300">Ca Sáng: 08:00 - 17:00 <ChevronDown className="size-3 text-slate-500" /></button><span className="flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/5 px-3 py-2 font-mono text-[10px] text-emerald-400"><span className="size-2 animate-pulse rounded-full bg-emerald-400" /> LIVE 1s • 6/8 Node Online</span></div>
+          <div className="flex items-center gap-1.5"><button className="hidden rounded-lg border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-slate-300 transition hover:border-cyan-400/40 hover:text-white lg:flex lg:items-center lg:gap-2"><Download className="size-3.5" /> Xuất Báo Cáo PDF</button><button className="hidden rounded-lg border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-slate-300 transition hover:border-cyan-400/40 hover:text-white lg:flex lg:items-center lg:gap-2"><Bell className="size-3.5" /> Cảnh Báo Zalo</button><button aria-label="Đổi giao diện" onClick={() => setLight(!light)} className="rounded-lg border border-white/10 p-2 text-slate-400 hover:text-white">{light ? <Moon className="size-4" /> : <Sun className="size-4" />}</button><div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-xs font-bold text-white">NV</div></div>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-[1700px] px-4 py-5 lg:px-8">
+        <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          {[['Hiệu Suất OEE Toàn Xưởng', '68.4%', '+4.2% so với tuần trước', Gauge, 'emerald'], ['Thời Gian Cắt Gọt Thực Tế', '5h 18m', '66.2% ca', Zap, 'emerald'], ['Thời Gian Chạy Chờ Lãng Phí', '2h 12m', '27.5% ca', Clock3, 'amber'], ['Tổng Sản Phẩm Đã Gia Công', '148', '/ 180 chi tiết', CheckCircle2, 'cyan'], ['Tiền Điện Tiêu Thụ Trong Ca', '428.500', '134.2 kWh • 3.200 đ/kWh', CircleDollarSign, 'indigo']].map(([label, value, sub, Icon, color], i) => <GlassCard key={String(label)} className="relative overflow-hidden p-4"><div className={`absolute -right-6 -top-8 size-24 rounded-full bg-${color}-400/10 blur-2xl`} /><div className="flex items-start justify-between"><p className="max-w-[170px] text-[11px] leading-4 text-slate-400">{label}</p><Icon className={`size-4 text-${color}-400`} /></div><div className="mt-3 flex items-end justify-between"><p className="font-mono text-2xl font-bold tracking-tight">{value}{i === 4 && <span className="ml-1 text-sm text-slate-500">đ</span>}</p>{i === 0 && <div className="relative flex size-9 items-center justify-center rounded-full border-4 border-emerald-400/20 border-t-emerald-400 text-[9px] font-mono text-emerald-300">68%</div>}</div><div className={`mt-2 text-[10px] ${i === 2 ? 'text-amber-400' : i === 0 ? 'text-emerald-400' : 'text-slate-500'}`}>{i === 0 ? '↗ ' : ''}{sub}</div>{i === 3 && <div className="mt-3 h-1 rounded-full bg-slate-800"><div className="h-full w-[82%] rounded-full bg-cyan-400" /></div>}</GlassCard>)}
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(380px,1fr)]">
+          <div className="flex min-w-0 flex-col gap-5"><GlassCard className="p-5"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><div className="flex items-center gap-2"><Cpu className="size-4 text-emerald-400" /><h2 className="text-sm font-semibold">Danh Sách Máy CNC Phân Xưởng</h2></div><p className="mt-1 text-[10px] text-slate-500">Theo dõi trạng thái vận hành theo thời gian thực</p></div><div className="flex gap-1 rounded-lg bg-slate-950/70 p-1">{['Tất Cả', 'Đang Cắt', 'Đang Chờ', 'Cảnh Báo'].map((item) => <button key={item} onClick={() => setTab(item)} className={`rounded-md px-2 py-1.5 text-[10px] transition ${tab === item ? 'bg-emerald-400/15 text-emerald-300' : 'text-slate-500 hover:text-slate-300'}`}>{item} <span className="font-mono opacity-60">({item === 'Tất Cả' ? 8 : item === 'Đang Cắt' ? 5 : item === 'Đang Chờ' ? 2 : 1})</span></button>)}</div></div><div className="grid gap-3 md:grid-cols-2">{filtered.map((m) => <button key={m.id} onClick={() => setSelected(machines.findIndex((item) => item.id === m.id))} className={`group rounded-lg border bg-slate-950/40 p-3 text-left transition duration-200 hover:-translate-y-0.5 hover:border-cyan-400/40 ${selected === machines.findIndex((item) => item.id === m.id) ? 'border-cyan-400/50 shadow-[0_0_24px_rgba(6,182,212,.08)]' : m.type === 'alarm' ? 'border-red-400/30' : 'border-white/10'}`}><div className="flex items-start justify-between gap-2"><div><p className="text-xs font-semibold text-slate-200">{m.name}</p><p className="mt-0.5 font-mono text-[10px] text-slate-500">{m.model}</p></div><MoreHorizontal className="size-4 text-slate-600" /></div><div className="mt-3"><StatusBadge type={m.type}>{m.status}</StatusBadge></div><div className="mt-4 grid grid-cols-3 gap-2 border-t border-white/5 pt-3"><Metric label="Công suất" value={m.power} unit="kW" color={m.accent === 'red' ? 'red' : m.accent === 'amber' ? 'amber' : 'cyan'} /><Metric label={m.type === 'alarm' ? 'Sự cố' : 'Thông số'} value={m.detail.split(':')[0]} unit={m.type === 'alarm' ? '' : m.detail.includes(':') ? m.detail.split(':')[1] : ''} /><Metric label="Đã làm" value={m.parts} unit="chi tiết" color="emerald" /></div></button>)}</div></GlassCard>
+            <GlassCard className="p-5"><div className="flex items-start justify-between"><div><div className="flex items-center gap-2"><Activity className="size-4 text-cyan-400" /><h2 className="text-sm font-semibold">Biểu Đồ Công Suất Thời Gian Thực</h2></div><p className="mt-1 text-[10px] text-slate-500">{machine.name} • dữ liệu 1 giây • 15 phút gần nhất</p></div><span className="rounded bg-emerald-400/10 px-2 py-1 font-mono text-[10px] text-emerald-400">LIVE / 1s</span></div><div className="mt-4 h-[220px] w-full"><ResponsiveContainer width="100%" height="100%"><AreaChart data={wave} margin={{ top: 8, right: 4, left: -18, bottom: 0 }}><defs><linearGradient id="powerFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity={0.35} /><stop offset="100%" stopColor="#10b981" stopOpacity={0} /></linearGradient></defs><CartesianGrid stroke="#ffffff10" vertical={false} /><XAxis dataKey="t" tick={{ fill: '#64748b', fontSize: 9 }} tickLine={false} axisLine={false} interval={14} /><YAxis domain={[0, 7]} tick={{ fill: '#64748b', fontSize: 9 }} tickLine={false} axisLine={false} /><Tooltip contentStyle={{ background: '#0c111e', border: '1px solid #ffffff1a', borderRadius: 8, fontSize: 11 }} labelStyle={{ color: '#94a3b8' }} /><ReferenceLine y={2} stroke="#ef4444" strokeDasharray="4 4" label={{ value: 'Ngưỡng Cắt 2.0 kW', fill: '#ef4444', fontSize: 9, position: 'insideTopRight' }} /><ReferenceLine y={0.5} stroke="#f59e0b" strokeDasharray="4 4" label={{ value: 'Ngưỡng Chờ 0.5 kW', fill: '#f59e0b', fontSize: 9, position: 'insideBottomRight' }} /><Area type="monotone" dataKey="power" stroke="#10b981" strokeWidth={2} fill="url(#powerFill)" dot={false} /></AreaChart></ResponsiveContainer></div></GlassCard>
+            <GlassCard className="p-5"><div className="flex items-center justify-between"><div><h2 className="text-sm font-semibold">Timeline Vận Hành Ca Sáng</h2><p className="mt-1 text-[10px] text-slate-500">08:00 — 17:00 • theo dõi phân bổ thời gian</p></div><div className="flex gap-3 text-[10px] text-slate-500"><span><i className="mr-1 inline-block size-2 rounded-sm bg-emerald-400" />Cắt</span><span><i className="mr-1 inline-block size-2 rounded-sm bg-amber-400" />Chờ</span><span><i className="mr-1 inline-block size-2 rounded-sm bg-red-400" />Sự cố</span></div></div><div className="mt-4 flex h-8 overflow-hidden rounded-md border border-white/10 bg-slate-950"><div className="w-[22%] bg-emerald-500/70" /><div className="w-[8%] bg-amber-500/70" /><div className="w-[28%] bg-emerald-500/70" /><div className="w-[11%] bg-slate-700" /><div className="w-[14%] bg-red-500/70" /><div className="w-[17%] bg-emerald-500/70" /></div><div className="mt-2 flex justify-between font-mono text-[9px] text-slate-600"><span>08:00</span><span>10:00</span><span>12:00</span><span>13:00</span><span>15:00</span><span>17:00</span></div></GlassCard></div>
+
+          <aside className="flex min-w-0 flex-col gap-5"><GlassCard className="p-5"><div className="flex items-start justify-between"><div><div className="flex items-center gap-2"><Radio className="size-4 text-emerald-400" /><h2 className="text-sm font-semibold">Chi Tiết Kỹ Thuật: {machine.name}</h2></div><p className="mt-1 font-mono text-[10px] text-slate-500">Node WTR-3P-00{selected + 1} • Trạng thái kết nối ổn định</p></div><button className="rounded-md border border-white/10 p-2 text-slate-400 hover:text-white" aria-label="Kiểm tra nhanh"><Settings2 className="size-4" /></button></div><div className="mt-4 flex items-center justify-between rounded-lg border border-emerald-400/10 bg-emerald-400/5 p-3"><span className="text-[10px] text-slate-400">Máy đang được chọn</span><StatusBadge type={machine.type}>{machine.status}</StatusBadge></div><h3 className="mt-5 text-[11px] font-semibold text-slate-300">Điện Năng 3 Pha</h3><div className="mt-3 grid grid-cols-3 gap-2">{[['Pha A', '221.4', '12.4', '1.62', '0.88'], ['Pha B', '220.8', '11.9', '1.55', '0.87'], ['Pha C', '222.1', '12.8', '1.63', '0.89']].map(([phase, volt, curr, power, pf]) => <div key={phase} className="rounded-lg border border-white/10 bg-slate-950/50 p-3"><p className="text-[10px] font-bold text-cyan-400">{phase}</p><div className="mt-3 flex flex-col gap-2"><Metric label="Điện áp" value={volt} unit="V" /><Metric label="Dòng điện" value={curr} unit="A" color="emerald" /><Metric label="Công suất" value={power} unit="kW" color="amber" /><Metric label="Hệ số PF" value={pf} /></div></div>)}</div><div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3"><span className="text-[10px] text-slate-500">Tổng công suất tức thời</span><span className="font-mono text-sm font-bold text-cyan-400">4.80 kW</span></div><div className="mt-4 rounded-lg border border-emerald-400/10 bg-emerald-400/5 p-3"><div className="flex items-center justify-between text-[10px]"><span className="text-slate-400">Độ lệch pha</span><span className="font-mono text-emerald-400">3.2% <span className="text-slate-500">• Cân Bằng Chuẩn &lt; 5%</span></span></div><div className="mt-2 h-1 rounded bg-slate-800"><div className="h-full w-[32%] rounded bg-emerald-400" /></div></div></GlassCard>
+            <GlassCard className="p-5"><div className="flex items-center gap-2"><ShieldCheck className="size-4 text-emerald-400" /><h2 className="text-sm font-semibold">Sức Khỏe Máy & Môi Trường</h2></div><div className="mt-4 grid grid-cols-2 gap-4"><div><div className="flex justify-between text-[10px]"><span className="text-slate-500">Nhiệt độ tủ điện</span><span className="font-mono text-emerald-400">41.5°C</span></div><div className="mt-2 h-1.5 rounded bg-slate-800"><div className="h-full w-[42%] rounded bg-emerald-400" /></div><p className="mt-1 text-[9px] text-slate-600">Bình thường • giới hạn 70°C</p></div><div><div className="flex justify-between text-[10px]"><span className="text-slate-500">Mòn dao</span><span className="font-mono text-emerald-400">92/100</span></div><div className="mt-2 h-1.5 rounded bg-slate-800"><div className="h-full w-[92%] rounded bg-emerald-400" /></div><p className="mt-1 text-[9px] text-slate-600">Bình thường • dao còn bén</p></div></div></GlassCard>
+            <GlassCard className="p-5"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><History className="size-4 text-amber-400" /><h2 className="text-sm font-semibold">Cảnh Báo & Sự Kiện</h2></div><button className="text-[10px] text-cyan-400 hover:text-cyan-300">Xem tất cả</button></div><div className="mt-4 flex flex-col gap-4">{[['11:04 AM', 'Lỗi', 'CNC 02 - Dòng Pha A vọt lên 38A vượt ngưỡng kẹt dao', 'red'], ['10:15 AM', 'Cảnh báo', 'CNC 03 - Máy ở chế độ chờ liên tục quá 30 phút', 'amber'], ['09:30 AM', 'Thông báo', 'CNC 01 - Hoàn thành chu kỳ chi tiết số 32', 'cyan']].map(([time, label, text, color]) => <div key={time} className="flex gap-3"><div className={`mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-${color}-400/10`}><span className={`size-1.5 rounded-full bg-${color}-400`} /></div><div><p className="font-mono text-[9px] text-slate-600">{time} <span className={`ml-2 font-sans font-semibold text-${color}-400`}>{label}</span></p><p className="mt-1 text-[10px] leading-4 text-slate-400">{text}</p></div></div>)}</div></GlassCard></aside>
+        </div>
+
+        <footer className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-400/15 bg-cyan-400/[.03] px-4 py-3"><div className="flex items-center gap-2 text-[10px] text-slate-500"><Lightbulb className="size-4 text-amber-400" /> <span><strong className="text-slate-300">Gợi ý vận hành:</strong> CNC 03 đang tiêu thụ điện ở chế độ chờ — kiểm tra lịch chạy dao.</span></div><div className="flex flex-wrap gap-2"><button className="flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-[10px] text-slate-300 hover:border-cyan-400/30"><Download className="size-3" /> Tải Báo Cáo PDF Ca Này</button><button className="flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-[10px] text-slate-300 hover:border-cyan-400/30"><Bell className="size-3" /> Gửi Zalo Ban Giám Đốc</button><button className="flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-[10px] text-slate-300 hover:border-cyan-400/30"><Download className="size-3" /> Tải CSV Dữ Liệu Thô</button></div></footer>
+      </div>
+    </main>
+  )
+}
+
